@@ -73,11 +73,12 @@ export async function signIn(_prevState: SignInState, formData: FormData): Promi
     throw error;
   }
 
-  redirect("/");
+    redirect("/projects");
+
 }
 
 export async function signOut() {
   // Deletes the session row and clears the cookie (via nextCookies()).
   await auth.api.signOut({ headers: await headers() });
-  redirect("/projects");
+  redirect("/");
 }

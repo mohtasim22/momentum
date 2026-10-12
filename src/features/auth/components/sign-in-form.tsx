@@ -1,33 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
-import { z } from "zod";
+import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { signIn } from "../actions";
-import { signInSchema, type SignInState } from "../schemas";
+import { signInSchema } from "../schemas";
+import { useSchemaValidation } from "@/hooks/use-schema-validation";
 
 export function SignInForm() {
   const [state, formAction, pending] = useActionState(signIn, {});
-  const [clientErrors, setClientErrors] = useState<SignInState["fieldErrors"]>();
-
-  function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
-    const data = Object.fromEntries(new FormData(event.currentTarget));
-    const result = signInSchema.safeParse(data);
-    if (!result.success) {
-      event.preventDefault();
-      setClientErrors(z.flattenError(result.error).fieldErrors);
-    } else {
-      setClientErrors(undefined);
-    }
-  }
+  const { clientErrors, validate } = useSchemaValidation(signInSchema);
 
   const errors = clientErrors ?? state.fieldErrors;
 
   return (
-    <form action={formAction} onSubmit={handleSubmit} noValidate className="grid gap-6">
+    <form action={formAction} onSubmit={validate} noValidate className="grid gap-6">
       <FieldGroup>
         <Field data-invalid={!!errors?.email}>
           <FieldLabel htmlFor="email">Email</FieldLabel>

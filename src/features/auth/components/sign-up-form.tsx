@@ -1,34 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
-import { z } from "zod";
+import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { signUp } from "../actions";
-import { signUpSchema, type SignUpState } from "../schemas";
+import { signUpSchema } from "../schemas";
+import { useSchemaValidation } from "@/hooks/use-schema-validation";
 
 export function SignUpForm() {
   const [state, formAction, pending] = useActionState(signUp, {});
-  const [clientErrors, setClientErrors] = useState<SignUpState["fieldErrors"]>();
+  const { clientErrors, validate } = useSchemaValidation(signUpSchema);
 
-  // Runs before the action. Invalid input never leaves the browser.
-  function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
-    const data = Object.fromEntries(new FormData(event.currentTarget));
-    const result = signUpSchema.safeParse(data);
-    if (!result.success) {
-      event.preventDefault();
-      setClientErrors(z.flattenError(result.error).fieldErrors);
-    } else {
-      setClientErrors(undefined);
-    }
-  }
+
 
   const errors = clientErrors ?? state.fieldErrors;
 
   return (
-    <form action={formAction} onSubmit={handleSubmit} noValidate className="grid gap-6">
+    <form action={formAction} onSubmit={validate} noValidate className="grid gap-6">
       <FieldGroup>
         <Field data-invalid={!!errors?.name}>
           <FieldLabel htmlFor="name">Name</FieldLabel>

@@ -1,3 +1,4 @@
+import { FormState } from "@/lib/form-state";
 import { z } from "zod";
 
 // One schema, two users: the sign-up form checks it in the browser for
@@ -14,11 +15,7 @@ export const signUpSchema = z.object({
 export type SignUpInput = z.infer<typeof signUpSchema>;
 
 // What the sign-up action sends back to the form
-export type SignUpState = {
-  fieldErrors?: Partial<Record<keyof SignUpInput, string[]>>;
-  formError?: string;
-  values?: { name?: string; email?: string };
-};
+export type SignUpState = FormState<SignUpInput>;
 
 export const signInSchema = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address")),
@@ -27,8 +24,4 @@ export const signInSchema = z.object({
 
 export type SignInInput = z.infer<typeof signInSchema>;
 
-export type SignInState = {
-  fieldErrors?: Partial<Record<keyof SignInInput, string[]>>;
-  formError?: string;
-  values?: { email?: string };
-};
+export type SignInState = FormState<SignInInput>;

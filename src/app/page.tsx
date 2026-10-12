@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 import { buttonVariants } from "@/components/ui/button";
 import { SignOutButton } from "@/features/auth/components/sign-out-button";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 
 const statuses = [
   { label: "Todo", className: "bg-status-todo-bg text-status-todo" },
@@ -14,9 +13,9 @@ const statuses = [
 
 // Temporary home page. The real landing page comes in step 8.1.
 export default async function Home() {
-  // Reads the session cookie from this request. Because it uses headers(),
-  // Next.js renders this page per request instead of at build time.
-  const session = await auth.api.getSession({ headers: await headers() });
+  // Reads the session cookie from this request, so Next.js renders this page
+  // per request instead of at build time.
+  const session = await getSession();
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-8 px-6 py-16">
@@ -38,7 +37,12 @@ export default async function Home() {
                 {session.user.name} <span className="text-muted-foreground">· {session.user.email}</span>
               </p>
             </div>
-            <SignOutButton />
+            <div className="flex gap-2">
+              <Link href="/projects" className={buttonVariants({ size: "sm" })}>
+                Open projects
+              </Link>
+              <SignOutButton />
+            </div>
           </>
         ) : (
           <>

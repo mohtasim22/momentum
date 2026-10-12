@@ -5,7 +5,12 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
-import { signInSchema, SignInState, signUpSchema, type SignUpState } from "./schemas";
+import {
+  signInSchema,
+  signUpSchema,
+  type SignInState,
+  type SignUpState,
+} from "./schemas";
 
 export async function signUp(_prevState: SignUpState, formData: FormData): Promise<SignUpState> {
   const values = {
@@ -39,7 +44,7 @@ export async function signUp(_prevState: SignUpState, formData: FormData): Promi
 
   // Outside the try: redirect() works by throwing, and the catch above
   // must not swallow it. Changes to /projects in step 1.8.
-  redirect("/");
+  redirect("/projects");
 }
 
 export async function signIn(_prevState: SignInState, formData: FormData): Promise<SignInState> {
@@ -74,5 +79,5 @@ export async function signIn(_prevState: SignInState, formData: FormData): Promi
 export async function signOut() {
   // Deletes the session row and clears the cookie (via nextCookies()).
   await auth.api.signOut({ headers: await headers() });
-  redirect("/sign-in");
+  redirect("/projects");
 }

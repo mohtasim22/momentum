@@ -14,11 +14,13 @@ export default async function SignInPage() {
   return (
     <div className="grid gap-6">
       <div className="grid gap-1">
-        <p className="font-mono text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+        <p className="font-mono text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">
           Momentum
         </p>
         <h1 className="text-xl font-semibold tracking-tight">Sign in</h1>
-        <p className="text-sm text-muted-foreground">Welcome back. Your boards are where you left them.</p>
+        <p className="text-sm text-muted-foreground">
+          Welcome back. Your boards are where you left them.
+        </p>
       </div>
       <SignInForm />
     </div>

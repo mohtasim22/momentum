@@ -13,8 +13,6 @@ export function SignUpForm() {
   const [state, formAction, pending] = useActionState(signUp, {});
   const { clientErrors, validate } = useSchemaValidation(signUpSchema);
 
-
-
   const errors = clientErrors ?? state.fieldErrors;
 
   return (
@@ -59,7 +57,10 @@ export function SignUpForm() {
       </FieldGroup>
 
       {state.formError && (
-        <p role="alert" className="rounded-md border border-destructive/40 bg-status-overdue-bg px-3 py-2 text-sm text-destructive">
+        <p
+          role="alert"
+          className="rounded-md border border-destructive/40 bg-status-overdue-bg px-3 py-2 text-sm text-destructive"
+        >
           {state.formError}
         </p>
       )}

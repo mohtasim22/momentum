@@ -26,7 +26,9 @@ export function CreateProjectDialog() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>New project</DialogTitle>
-          <DialogDescription>You&apos;ll be its owner. You can invite your team afterwards.</DialogDescription>
+          <DialogDescription>
+            You&apos;ll be its owner. You can invite your team afterwards.
+          </DialogDescription>
         </DialogHeader>
         <CreateProjectForm onCreated={() => setOpen(false)} />
       </DialogContent>

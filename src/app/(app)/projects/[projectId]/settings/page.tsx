@@ -27,7 +27,7 @@ export default async function ProjectSettingsPage({
       <div className="grid gap-1">
         <Link
           href={`/projects/${project.id}`}
-          className="w-fit font-mono text-[11px] font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground"
+          className="w-fit font-mono text-[11px] font-semibold tracking-widest text-muted-foreground uppercase hover:text-foreground"
         >
           ← {project.name}
         </Link>

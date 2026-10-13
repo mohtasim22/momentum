@@ -12,25 +12,25 @@ import { requireUser } from "@/lib/session";
 // Every page, query and action that takes a projectId calls this first.
 // cache() makes repeat calls with the same id free within one request.
 export const requireMembership = cache(async (projectId: string) => {
-    const user = await requireUser();
+  const user = await requireUser();
 
-    // Actions receive projectId from the browser, so at runtime it could be
-    // anything. Treat a non-string exactly like an unknown project.
-    if (typeof projectId !== "string") {
-        notFound();
-    }
+  // Actions receive projectId from the browser, so at runtime it could be
+  // anything. Treat a non-string exactly like an unknown project.
+  if (typeof projectId !== "string") {
+    notFound();
+  }
 
-    const membership = await prisma.membership.findUnique({
-        where: { userId_projectId: { userId: user.id, projectId } },
-        select: {
-            role: true,
-            project: { select: { id: true, name: true } },
-        },
-    });
+  const membership = await prisma.membership.findUnique({
+    where: { userId_projectId: { userId: user.id, projectId } },
+    select: {
+      role: true,
+      project: { select: { id: true, name: true } },
+    },
+  });
 
-    if (!membership) {
-        notFound();
-    }
+  if (!membership) {
+    notFound();
+  }
 
-    return { user, role: membership.role, project: membership.project };
+  return { user, role: membership.role, project: membership.project };
 });

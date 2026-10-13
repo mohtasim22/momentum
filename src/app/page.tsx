@@ -20,7 +20,7 @@ export default async function Home() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-8 px-6 py-16">
       <div className="space-y-2">
-        <p className="font-mono text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+        <p className="font-mono text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">
           Momentum · dev home
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">A task board for small teams.</h1>
@@ -30,11 +30,12 @@ export default async function Home() {
         {session ? (
           <>
             <div className="min-w-0">
-              <p className="font-mono text-[11px] font-semibold uppercase tracking-widest text-status-done">
+              <p className="font-mono text-[11px] font-semibold tracking-widest text-status-done uppercase">
                 Signed in
               </p>
               <p className="truncate">
-                {session.user.name} <span className="text-muted-foreground">· {session.user.email}</span>
+                {session.user.name}{" "}
+                <span className="text-muted-foreground">· {session.user.email}</span>
               </p>
             </div>
             <div className="flex gap-2">

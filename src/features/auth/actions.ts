@@ -5,12 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
-import {
-  signInSchema,
-  signUpSchema,
-  type SignInState,
-  type SignUpState,
-} from "./schemas";
+import { signInSchema, signUpSchema, type SignInState, type SignUpState } from "./schemas";
 
 export async function signUp(_prevState: SignUpState, formData: FormData): Promise<SignUpState> {
   const values = {
@@ -74,7 +69,6 @@ export async function signIn(_prevState: SignInState, formData: FormData): Promi
   }
 
   redirect("/projects");
-
 }
 
 export async function signOut() {

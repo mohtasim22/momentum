@@ -24,8 +24,8 @@ export function DeleteProjectForm({ projectId, projectName }: Props) {
       <Field data-invalid={!!error}>
         <FieldLabel htmlFor="confirm-name">Type the project name to confirm</FieldLabel>
         <FieldDescription>
-          This deletes <strong className="text-foreground">{projectName}</strong> for everyone. It can&apos;t be
-          undone.
+          This deletes <strong className="text-foreground">{projectName}</strong> for everyone. It
+          can&apos;t be undone.
         </FieldDescription>
         <Input
           id="confirm-name"

@@ -14,11 +14,13 @@ export default async function SignUpPage() {
   return (
     <div className="grid gap-6">
       <div className="grid gap-1">
-        <p className="font-mono text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+        <p className="font-mono text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">
           Momentum
         </p>
         <h1 className="text-xl font-semibold tracking-tight">Create your account</h1>
-        <p className="text-sm text-muted-foreground">You&apos;ll start your first project right after.</p>
+        <p className="text-sm text-muted-foreground">
+          You&apos;ll start your first project right after.
+        </p>
       </div>
       <SignUpForm />
     </div>

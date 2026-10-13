@@ -45,7 +45,10 @@ export function SignInForm() {
       </FieldGroup>
 
       {state.formError && (
-        <p role="alert" className="rounded-md border border-destructive/40 bg-status-overdue-bg px-3 py-2 text-sm text-destructive">
+        <p
+          role="alert"
+          className="rounded-md border border-destructive/40 bg-status-overdue-bg px-3 py-2 text-sm text-destructive"
+        >
           {state.formError}
         </p>
       )}

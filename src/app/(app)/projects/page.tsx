@@ -15,7 +15,7 @@ export default async function ProjectsPage() {
     <div className="grid gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="grid gap-1">
-          <p className="font-mono text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+          <p className="font-mono text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">
             Projects
           </p>
           <h1 className="text-xl font-semibold tracking-tight">Your projects</h1>

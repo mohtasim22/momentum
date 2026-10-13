@@ -12,7 +12,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="flex flex-1 flex-col">
       <header className="border-b">
         <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-4 px-4">
-          <Link href="/projects" className="font-mono text-xs font-semibold uppercase tracking-widest">
+          <Link
+            href="/projects"
+            className="font-mono text-xs font-semibold tracking-widest uppercase"
+          >
             Momentum
           </Link>
           <div className="flex min-w-0 items-center gap-3">

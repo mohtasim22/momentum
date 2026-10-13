@@ -1,11 +1,21 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
+import { requireMembership } from "@/lib/authz";
 import type { FormState } from "@/lib/form-state";
+import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { createProjectSchema, type CreateProjectInput } from "./schemas";
+import {
+  createProjectSchema,
+  deleteProjectSchema,
+  renameProjectSchema,
+  type CreateProjectInput,
+  type DeleteProjectInput,
+  type RenameProjectInput,
+} from "./schemas";
 
 type CreateProjectState = FormState<CreateProjectInput>;
 
@@ -41,4 +51,62 @@ export async function createProject(
   revalidatePath("/projects");
 
   return { ok: true, message: `Created “${project.name}”.` };
+}
+
+// projectId arrives through .bind() in the form. Bound arguments come from
+// the browser like everything else, so requireMembership checks it again.
+export async function renameProject(
+  projectId: string,
+  _prevState: FormState<RenameProjectInput>,
+  formData: FormData,
+): Promise<FormState<RenameProjectInput>> {
+  // 1. Member of this project? (404 if not)  2. Allowed to rename?
+  const { role } = await requireMembership(projectId);
+  if (!can(role, "project:rename")) {
+    return { formError: "Only owners and admins can rename this project." };
+  }
+
+  const parsed = renameProjectSchema.safeParse({ name: formData.get("name") });
+  if (!parsed.success) {
+    return {
+      fieldErrors: z.flattenError(parsed.error).fieldErrors,
+      values: { name: String(formData.get("name") ?? "") },
+    };
+  }
+
+  await prisma.project.update({
+    where: { id: projectId },
+    data: { name: parsed.data.name },
+  });
+
+  // "layout" refreshes this project's page AND everything under it (settings)
+  revalidatePath(`/projects/${projectId}`, "layout");
+  revalidatePath("/projects");
+
+  return { ok: true, message: "Saved." };
+}
+
+export async function deleteProject(
+  projectId: string,
+  _prevState: FormState<DeleteProjectInput>,
+  formData: FormData,
+): Promise<FormState<DeleteProjectInput>> {
+  const { role, project } = await requireMembership(projectId);
+  if (!can(role, "project:delete")) {
+    return { formError: "Only the owner can delete this project." };
+  }
+
+  const parsed = deleteProjectSchema.safeParse({ confirmName: formData.get("confirmName") });
+  if (!parsed.success) {
+    return { fieldErrors: z.flattenError(parsed.error).fieldErrors };
+  }
+  if (parsed.data.confirmName !== project.name) {
+    return { fieldErrors: { confirmName: ["That doesn't match the project name"] } };
+  }
+
+  // Memberships go with it (onDelete: Cascade); tasks will too, in Slice 3.
+  await prisma.project.delete({ where: { id: projectId } });
+
+  revalidatePath("/projects");
+  redirect("/projects");
 }

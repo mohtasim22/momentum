@@ -1,5 +1,7 @@
+import { Settings } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
 import { requireMembership } from "@/lib/authz";
 
 const roleLabel = { OWNER: "Owner", ADMIN: "Admin", MEMBER: "Member" } as const;
@@ -27,11 +29,20 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[proj
         >
           ← Projects
         </Link>
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-xl font-semibold tracking-tight">{project.name}</h1>
-          <span className="rounded-sm bg-secondary px-1.5 py-0.5 font-mono text-xs text-ink-2">
-            {roleLabel[role]}
-          </span>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <h1 className="truncate text-xl font-semibold tracking-tight">{project.name}</h1>
+            <span className="rounded-sm bg-secondary px-1.5 py-0.5 font-mono text-xs text-ink-2">
+              {roleLabel[role]}
+            </span>
+          </div>
+          <Link
+            href={`/projects/${project.id}/settings`}
+            className={buttonVariants({ variant: "ghost", size: "sm" })}
+          >
+            <Settings data-icon="inline-start" />
+            Settings
+          </Link>
         </div>
       </div>
 

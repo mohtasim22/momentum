@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useSchemaValidation } from "@/hooks/use-schema-validation";
+import type { FormState } from "@/lib/form-state";
 import { createProject } from "../actions";
-import { CreateProjectInput, createProjectSchema } from "../schemas";
-import { FormState } from "@/lib/form-state";
+import { createProjectSchema, type CreateProjectInput } from "../schemas";
 
 type Props = {
   // Called after the server confirms the project exists
@@ -28,26 +28,21 @@ export function CreateProjectForm({ onCreated }: Props) {
   const errors = clientErrors ?? state.fieldErrors;
 
   return (
-    <form
-      action={formAction}
-      onSubmit={validate}
-      noValidate
-      className="grid gap-3"
-    >
+    <form action={formAction} onSubmit={validate} noValidate className="grid gap-4">
       <Field data-invalid={!!errors?.name}>
-        <FieldLabel htmlFor="project-name">New project</FieldLabel>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Input
-            id="project-name"
-            name="name"
-            placeholder="e.g. Website relaunch"
-            autoComplete="off"
-            defaultValue={state.values?.name}
-            aria-invalid={!!errors?.name}
-          />
-        </div>
+        <FieldLabel htmlFor="project-name">Project name</FieldLabel>
+        <Input
+          id="project-name"
+          name="name"
+          placeholder="e.g. Website relaunch"
+          autoComplete="off"
+          defaultValue={state.values?.name}
+          aria-invalid={!!errors?.name}
+        />
+        <FieldError>{errors?.name?.[0]}</FieldError>
       </Field>
-      <Button type="submit" disabled={pending}>
+
+      <Button type="submit" disabled={pending} className="justify-self-end">
         {pending ? "Creating…" : "Create project"}
       </Button>
     </form>

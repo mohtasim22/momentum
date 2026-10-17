@@ -1,13 +1,14 @@
-import type { Priority, TaskStatus } from "@/generated/prisma/enums";
+import type { TaskStatus } from "@/generated/prisma/enums";
 import { AddTaskForm } from "@/features/tasks/components/add-task-form";
-import { TaskCard } from "./task-card";
+import { TaskDialog } from "@/features/tasks/components/task-dialog";
+import type { BoardTask } from "../types";
 
 type Props = {
   projectId: string;
   status: TaskStatus;
   label: string;
   badge: string;
-  tasks: { id: string; title: string; priority: Priority }[];
+  tasks: BoardTask[];
 };
 
 export function BoardColumn({ projectId, status, label, badge, tasks }: Props) {
@@ -34,7 +35,7 @@ export function BoardColumn({ projectId, status, label, badge, tasks }: Props) {
         <ol className="grid gap-2">
           {tasks.map((task) => (
             <li key={task.id}>
-              <TaskCard title={task.title} priority={task.priority} />
+              <TaskDialog projectId={projectId} task={task} />
             </li>
           ))}
         </ol>

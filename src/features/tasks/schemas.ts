@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { TaskStatus } from "@/generated/prisma/enums";
+import { Priority, TaskStatus } from "@/generated/prisma/enums";
 
 export const taskTitleSchema = z
   .string()
@@ -7,11 +7,31 @@ export const taskTitleSchema = z
   .min(1, "Give the task a title")
   .max(200, "Keep it under 200 characters");
 
+const taskStatusSchema = z.enum(TaskStatus, "Pick a column");
+
 export const createTaskSchema = z.object({
   title: taskTitleSchema,
   // Comes from a hidden input, so the browser could send anything:
   // only the four real statuses get through.
-  status: z.enum(TaskStatus, "Pick a column"),
+  status: taskStatusSchema,
 });
 
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
+
+export const updateTaskSchema = z.object({
+  title: taskTitleSchema,
+  // An empty textarea means "no description": store null, not ""
+  description: z
+    .string()
+    .trim()
+    .max(5000, "Keep it under 5,000 characters")
+    .transform((value) => (value === "" ? null : value)),
+  status: taskStatusSchema,
+  priority: z.enum(Priority, "Pick a priority"),
+  // <input type="date"> sends "2026-10-20", or "" when cleared
+  dueDate: z
+    .union([z.literal(""), z.iso.date("Use a real date")])
+    .transform((value) => (value === "" ? null : value)),
+});
+
+export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;

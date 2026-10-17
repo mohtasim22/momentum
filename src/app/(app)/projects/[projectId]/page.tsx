@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { requireMembership } from "@/lib/authz";
+import { getBoard } from "@/features/board/queries";
+import { BoardColumn } from "@/features/board/components/board-column";
 
 const roleLabel = { OWNER: "Owner", ADMIN: "Admin", MEMBER: "Member" } as const;
 
@@ -18,7 +20,7 @@ export async function generateMetadata({
 
 export default async function ProjectPage({ params }: PageProps<"/projects/[projectId]">) {
   const { projectId } = await params;
-  const { project, role } = await requireMembership(projectId);
+  const { project, role, columns } = await getBoard(projectId);
 
   return (
     <div className="grid gap-6">
@@ -46,9 +48,20 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[proj
         </div>
       </div>
 
-      <div className="rounded-lg border border-dashed p-10 text-center">
-        <p className="font-medium">The board goes here</p>
-        <p className="mt-1 text-sm text-muted-foreground">Columns and tasks arrive in Slice 3.</p>
+      {/* Four columns: side by side on large screens, swipe sideways on phones */}
+      <div className="-mx-4 overflow-x-auto px-4 pb-2">
+        <div className="flex gap-3 lg:grid lg:grid-cols-4">
+          {columns.map((column) => (
+            <BoardColumn
+              key={column.status}
+              projectId={project.id}
+              status={column.status}
+              label={column.label}
+              badge={column.badge}
+              tasks={column.tasks}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

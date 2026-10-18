@@ -38,8 +38,7 @@ async function findTaskInProject(projectId: string, taskId: string) {
   if (typeof taskId !== "string") notFound();
   const task = await prisma.task.findFirst({
     where: { id: taskId, projectId },
-        select: { id: true, status: true, createdById: true },
-
+    select: { id: true, status: true, createdById: true },
   });
   if (!task) notFound();
   return task;

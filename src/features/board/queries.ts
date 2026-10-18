@@ -28,7 +28,7 @@ export async function getBoard(projectId: string) {
     },
   });
 
-// createdById is used here and then dropped: the browser only gets the answer
+  // createdById is used here and then dropped: the browser only gets the answer
   const tasks: BoardTask[] = rows.map(({ createdById, ...row }) => ({
     ...row,
     dueDate: row.dueDate ? dateToDateOnly(row.dueDate) : null,

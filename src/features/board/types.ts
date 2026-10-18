@@ -11,3 +11,11 @@ export type BoardTask = {
   dueDate: string | null;
   canDelete: boolean;
 };
+
+// One column as the board component receives it
+export type BoardColumnData = {
+  status: TaskStatus;
+  label: string;
+  badge: string;
+  tasks: BoardTask[];
+};

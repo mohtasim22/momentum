@@ -5,6 +5,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { requireMembership } from "@/lib/authz";
 import { getBoard } from "@/features/board/queries";
 import { BoardColumn } from "@/features/board/components/board-column";
+import { Board } from "@/features/board/components/board";
 
 const roleLabel = { OWNER: "Owner", ADMIN: "Admin", MEMBER: "Member" } as const;
 
@@ -48,21 +49,11 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[proj
         </div>
       </div>
 
-      {/* Four columns: side by side on large screens, swipe sideways on phones */}
+            {/* Four columns: side by side on large screens, swipe sideways on phones */}
       <div className="-mx-4 overflow-x-auto px-4 pb-2">
-        <div className="flex gap-3 lg:grid lg:grid-cols-4">
-          {columns.map((column) => (
-            <BoardColumn
-              key={column.status}
-              projectId={project.id}
-              status={column.status}
-              label={column.label}
-              badge={column.badge}
-              tasks={column.tasks}
-            />
-          ))}
-        </div>
+        <Board projectId={project.id} columns={columns} />
       </div>
+
     </div>
   );
 }

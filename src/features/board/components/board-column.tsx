@@ -1,14 +1,10 @@
-import type { TaskStatus } from "@/generated/prisma/enums";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { AddTaskForm } from "@/features/tasks/components/add-task-form";
-import { TaskDialog } from "@/features/tasks/components/task-dialog";
-import type { BoardTask } from "../types";
+import type { BoardColumnData } from "../types";
+import { SortableTask } from "./sortable-task";
 
-type Props = {
+type Props = BoardColumnData & {
   projectId: string;
-  status: TaskStatus;
-  label: string;
-  badge: string;
-  tasks: BoardTask[];
 };
 
 export function BoardColumn({ projectId, status, label, badge, tasks }: Props) {
@@ -32,13 +28,17 @@ export function BoardColumn({ projectId, status, label, badge, tasks }: Props) {
           No tasks
         </p>
       ) : (
-        <ol className="grid gap-2">
-          {tasks.map((task) => (
-            <li key={task.id}>
-              <TaskDialog projectId={projectId} task={task} />
-            </li>
-          ))}
-        </ol>
+        // The ids, in order, of the cards that can be sorted in this list
+        <SortableContext
+          items={tasks.map((task) => task.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <ol className="grid gap-2">
+            {tasks.map((task) => (
+              <SortableTask key={task.id} projectId={projectId} task={task} />
+            ))}
+          </ol>
+        </SortableContext>
       )}
 
       <AddTaskForm projectId={projectId} status={status} columnLabel={label} />

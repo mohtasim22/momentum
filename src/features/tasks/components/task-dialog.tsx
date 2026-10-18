@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { TaskCard } from "@/features/board/components/task-card";
 import type { BoardTask } from "@/features/board/types";
+import { DeleteTaskButton } from "./delete-task-button";
 import { EditTaskForm } from "./edit-task-form";
 
 type Props = {
@@ -22,6 +23,7 @@ type Props = {
 // work, because it's a real <button>.
 export function TaskDialog({ projectId, task }: Props) {
   const [open, setOpen] = useState(false);
+  const close = () => setOpen(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -29,7 +31,7 @@ export function TaskDialog({ projectId, task }: Props) {
         render={
           <button
             type="button"
-            className="block w-full rounded-md text-left transition-colors outline-none hover:[&>span]:border-line-hi focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="block w-full rounded-md text-left transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 hover:[&>span]:border-line-hi"
           />
         }
       >
@@ -40,7 +42,12 @@ export function TaskDialog({ projectId, task }: Props) {
           <DialogTitle>Edit task</DialogTitle>
           <DialogDescription>Changes are saved for everyone on this board.</DialogDescription>
         </DialogHeader>
-        <EditTaskForm projectId={projectId} task={task} onSaved={() => setOpen(false)} />
+        <EditTaskForm projectId={projectId} task={task} onSaved={close} />
+        {task.canDelete && (
+          <div className="border-t pt-4">
+            <DeleteTaskButton projectId={projectId} taskId={task.id} onDeleted={close} />
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

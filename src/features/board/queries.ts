@@ -5,11 +5,12 @@ import { dateToDateOnly } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
 import { COLUMNS } from "./columns";
 import type { BoardTask } from "./types";
+import { canDeleteTask } from "@/lib/permissions";
 
 // Everything the board page needs, in one query. requireMembership runs
 // first, so a non-member gets a 404 before any task is read.
 export async function getBoard(projectId: string) {
-  const { project, role } = await requireMembership(projectId);
+  const { user, project, role } = await requireMembership(projectId);
 
   const rows = await prisma.task.findMany({
     where: { projectId },
@@ -23,12 +24,15 @@ export async function getBoard(projectId: string) {
       status: true,
       priority: true,
       dueDate: true,
+      createdById: true,
     },
   });
 
-  const tasks: BoardTask[] = rows.map((row) => ({
+// createdById is used here and then dropped: the browser only gets the answer
+  const tasks: BoardTask[] = rows.map(({ createdById, ...row }) => ({
     ...row,
     dueDate: row.dueDate ? dateToDateOnly(row.dueDate) : null,
+    canDelete: canDeleteTask(role, user.id, createdById),
   }));
 
   // Group into the four columns, keeping the order from the query

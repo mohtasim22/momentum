@@ -9,4 +9,5 @@ export type BoardTask = {
   status: TaskStatus;
   priority: Priority;
   dueDate: string | null;
+  canDelete: boolean;
 };

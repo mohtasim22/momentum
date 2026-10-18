@@ -15,6 +15,7 @@ import {
   type CreateTaskInput,
   type UpdateTaskInput,
 } from "./schemas";
+import { canDeleteTask } from "@/lib/permissions";
 
 // Not exported, so not callable from the browser: just shared helpers.
 
@@ -37,7 +38,8 @@ async function findTaskInProject(projectId: string, taskId: string) {
   if (typeof taskId !== "string") notFound();
   const task = await prisma.task.findFirst({
     where: { id: taskId, projectId },
-    select: { id: true, status: true },
+        select: { id: true, status: true, createdById: true },
+
   });
   if (!task) notFound();
   return task;
@@ -124,4 +126,20 @@ export async function updateTask(
 
   revalidatePath(`/projects/${projectId}`);
   return { ok: true };
+}
+
+// Called from a button, not a form, so it takes plain arguments and returns
+// a plain result instead of FormState.
+export async function deleteTask(projectId: string, taskId: string): Promise<{ error?: string }> {
+  const { user, role } = await requireMembership(projectId);
+  const task = await findTaskInProject(projectId, taskId);
+
+  if (!canDeleteTask(role, user.id, task.createdById)) {
+    return { error: "Only owners, admins and the person who created a task can delete it." };
+  }
+
+  await prisma.task.delete({ where: { id: task.id } });
+
+  revalidatePath(`/projects/${projectId}`);
+  return {};
 }

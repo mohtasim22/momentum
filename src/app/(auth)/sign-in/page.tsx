@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { DemoSignInButton } from "@/features/auth/components/demo-sign-in-button";
 import { SignInForm } from "@/features/auth/components/sign-in-form";
+import { demoAvailable } from "@/features/auth/demo";
 import { safeNextPath } from "@/lib/safe-redirect";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
@@ -26,6 +28,12 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
         </p>
       </div>
       <SignInForm next={next} />
+      {demoAvailable() && !next && (
+        <div className="grid gap-3 border-t pt-6">
+          <p className="text-center text-sm text-muted-foreground">Just looking around?</p>
+          <DemoSignInButton variant="outline" className="w-full" />
+        </div>
+      )}
     </div>
   );
 }

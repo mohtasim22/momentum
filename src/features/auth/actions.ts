@@ -5,8 +5,10 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import type { FormState } from "@/lib/form-state";
 import { clientIp, consumeRateLimit, LIMITS, tooManyAttempts } from "@/lib/rate-limit";
 import { safeNextPath } from "@/lib/safe-redirect";
+import { DEMO_EMAIL, demoPassword } from "./demo";
 import { signInSchema, signUpSchema, type SignInState, type SignUpState } from "./schemas";
 
 export async function signUp(_prevState: SignUpState, formData: FormData): Promise<SignUpState> {
@@ -90,6 +92,32 @@ export async function signIn(_prevState: SignInState, formData: FormData): Promi
   }
 
   redirect(safeNextPath(formData.get("next")) ?? "/projects");
+}
+
+export async function signInDemo(): Promise<FormState<object>> {
+  const password = demoPassword();
+  if (!password) return { formError: "The demo isn't available right now." };
+
+  const requestHeaders = await headers();
+  const limit = await consumeRateLimit(
+    `sign-in:ip:${clientIp(requestHeaders)}`,
+    LIMITS.signInPerIp,
+  );
+  if (!limit.allowed) return { formError: tooManyAttempts(limit.retryAfterSeconds) };
+
+  try {
+    await auth.api.signInEmail({
+      body: { email: DEMO_EMAIL, password },
+      headers: requestHeaders,
+    });
+  } catch (error) {
+    if (error instanceof APIError) {
+      return { formError: "The demo account isn't set up yet. Run the seed script." };
+    }
+    throw error;
+  }
+
+  redirect("/projects");
 }
 
 export async function signOut(formData: FormData) {

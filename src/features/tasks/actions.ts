@@ -145,7 +145,8 @@ export async function deleteTask(projectId: string, taskId: string): Promise<{ e
   return {};
 }
 
-const BOARD_CHANGED = "The board changed while you were dragging. Refresh and try again.";
+const BOARD_CHANGED =
+  "Someone changed the board while you were dragging. It has been refreshed, so try again.";
 
 // Called by the board after a drop. The client says where the card landed
 // (column + neighbour ids); the server checks that picture against the

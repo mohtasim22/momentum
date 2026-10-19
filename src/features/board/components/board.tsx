@@ -10,7 +10,9 @@ import {
   type DragEndEvent,
   type DragOverEvent,
 } from "@dnd-kit/core";
+import { useRouter } from "next/navigation";
 import { useId, useState, useTransition } from "react";
+import { toast } from "sonner";
 import { moveTask } from "@/features/tasks/actions";
 import { findColumn, moveToColumn, reorderWithinColumn, sameSpot, spotOf } from "../board-state";
 import type { BoardColumnData } from "../types";
@@ -22,6 +24,8 @@ type Props = {
 };
 
 export function Board({ projectId, columns: serverColumns }: Props) {
+  const router = useRouter();
+
   // Local copy of the board, so a drop can reorder cards instantly.
   const [columns, setColumns] = useState(serverColumns);
   // The board as it was when the drag began, to restore if it's cancelled
@@ -44,7 +48,7 @@ export function Board({ projectId, columns: serverColumns }: Props) {
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
   );
 
-  const [, startTransition] = useTransition();
+  const [isSaving, startTransition] = useTransition();
 
   // A stable id stops server and browser from generating different
   // accessibility ids (a hydration mismatch)
@@ -86,6 +90,7 @@ export function Board({ projectId, columns: serverColumns }: Props) {
     setBeforeDrag(null);
     if (!over || !snapshot) return;
 
+    // 1. Optimistic: show the move straight away
     const next = reorderWithinColumn(columns, active.id, over.id);
     setColumns(next);
 
@@ -93,10 +98,23 @@ export function Board({ projectId, columns: serverColumns }: Props) {
     // Dropped exactly where it started: nothing to save
     if (!spot || sameSpot(spotOf(snapshot, active.id), spot)) return;
 
+    // 2. Save in the background
     startTransition(async () => {
-      const result = await moveTask(projectId, { taskId: String(active.id), ...spot });
-      // The server said no: put the board back as it was (a toast comes in 4.4)
-      if (result.error) setColumns(snapshot);
+      let error: string | undefined;
+      try {
+        ({ error } = await moveTask(projectId, { taskId: String(active.id), ...spot }));
+      } catch {
+        // The request itself failed: offline, server down, timeout
+        error = "Couldn't save that move. Check your connection and try again.";
+      }
+      if (!error) return;
+
+      // 3. Rollback: put the board back, say why, and fetch the server's
+      //    current board, since the reason is often that someone else
+      //    changed it
+      setColumns(snapshot);
+      toast.error(error);
+      router.refresh();
     });
   }
 
@@ -116,6 +134,12 @@ export function Board({ projectId, columns: serverColumns }: Props) {
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
+      <p
+        aria-live="polite"
+        className="mb-2 h-4 font-mono text-[11px] tracking-widest text-muted-foreground uppercase"
+      >
+        {isSaving ? "Saving…" : ""}
+      </p>
       <div className="flex gap-3 lg:grid lg:grid-cols-4">
         {columns.map((column) => (
           <BoardColumn key={column.status} projectId={projectId} {...column} />

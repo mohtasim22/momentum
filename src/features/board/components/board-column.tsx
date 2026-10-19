@@ -1,4 +1,8 @@
+"use client";
+
+import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { cn } from "@/lib/utils";
 import { AddTaskForm } from "@/features/tasks/components/add-task-form";
 import type { BoardColumnData } from "../types";
 import { SortableTask } from "./sortable-task";
@@ -8,6 +12,10 @@ type Props = BoardColumnData & {
 };
 
 export function BoardColumn({ projectId, status, label, badge, tasks }: Props) {
+  // The whole list area is a drop target with the column's status as its id,
+  // so a card can be dropped into an empty column too.
+  const { setNodeRef, isOver } = useDroppable({ id: status });
+
   return (
     <section
       aria-labelledby={`column-${status}`}
@@ -23,23 +31,25 @@ export function BoardColumn({ projectId, status, label, badge, tasks }: Props) {
         <span className="font-mono text-xs text-muted-foreground tabular-nums">{tasks.length}</span>
       </header>
 
-      {tasks.length === 0 ? (
-        <p className="rounded-md border border-dashed px-3 py-6 text-center text-xs text-muted-foreground">
-          No tasks
-        </p>
-      ) : (
-        // The ids, in order, of the cards that can be sorted in this list
-        <SortableContext
-          items={tasks.map((task) => task.id)}
-          strategy={verticalListSortingStrategy}
+      {/* The ids, in order, of the cards that can be sorted in this list */}
+      <SortableContext items={tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+        <ol
+          ref={setNodeRef}
+          className={cn(
+            "grid min-h-16 content-start gap-2 rounded-md transition-colors",
+            isOver && tasks.length === 0 && "bg-secondary",
+          )}
         >
-          <ol className="grid gap-2">
-            {tasks.map((task) => (
-              <SortableTask key={task.id} projectId={projectId} task={task} />
-            ))}
-          </ol>
-        </SortableContext>
-      )}
+          {tasks.length === 0 && (
+            <li className="rounded-md border border-dashed px-3 py-6 text-center text-xs text-muted-foreground">
+              No tasks
+            </li>
+          )}
+          {tasks.map((task) => (
+            <SortableTask key={task.id} projectId={projectId} task={task} />
+          ))}
+        </ol>
+      </SortableContext>
 
       <AddTaskForm projectId={projectId} status={status} columnLabel={label} />
     </section>

@@ -19,7 +19,7 @@ export function BoardColumn({ projectId, status, label, badge, tasks }: Props) {
   return (
     <section
       aria-labelledby={`column-${status}`}
-      className="flex w-72 shrink-0 flex-col gap-3 rounded-lg border bg-background/40 p-3 lg:w-auto"
+      className="relative flex w-72 shrink-0 flex-col gap-3 rounded-lg border bg-background/40 p-3 lg:w-auto"
     >
       <header className="flex items-center justify-between gap-2">
         <h2

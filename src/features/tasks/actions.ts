@@ -8,7 +8,13 @@ import { requireMembership } from "@/lib/authz";
 import { dateOnlyToDate } from "@/lib/dates";
 import type { FormState } from "@/lib/form-state";
 import { canDeleteTask } from "@/lib/permissions";
-import { positionAfter, positionBetween } from "@/lib/position";
+import {
+  freshPositions,
+  hasRoomBetween,
+  orderWithInsert,
+  positionAfter,
+  positionBetween,
+} from "@/lib/position";
 import { prisma } from "@/lib/prisma";
 import {
   createTaskSchema,
@@ -20,6 +26,34 @@ import {
 } from "./schemas";
 
 // Not exported, so not callable from the browser: just shared helpers.
+
+/** Re-key a whole column in order, inserting `taskId` right after `beforeId`. */
+async function rebalanceColumn(
+  projectId: string,
+  status: TaskStatus,
+  taskId: string,
+  beforeId: string | null,
+) {
+  await prisma.$transaction(async (tx) => {
+    const column = await tx.task.findMany({
+      where: { projectId, status, id: { not: taskId } },
+      orderBy: [{ position: "asc" }, { id: "asc" }],
+      select: { id: true },
+    });
+    const order = orderWithInsert(
+      column.map((t) => t.id),
+      taskId,
+      beforeId,
+    );
+    const keys = freshPositions(order.length);
+    for (const [index, id] of order.entries()) {
+      await tx.task.update({
+        where: { id },
+        data: { position: keys[index], ...(id === taskId && { status }) },
+      });
+    }
+  });
+}
 
 /** The next position at the bottom of a column. */
 async function bottomOfColumn(projectId: string, status: TaskStatus) {
@@ -182,20 +216,23 @@ export async function moveTask(
     return { error: BOARD_CHANGED };
   }
 
-  // 5. Compute the new position from the neighbours' real positions
-  let position: string;
-  try {
-    position =
-      before || after
-        ? positionBetween(before?.position ?? null, after?.position ?? null)
-        : await bottomOfColumn(projectId, status);
-  } catch {
-    // Neighbours out of order, or sharing a position (step 4.6)
-    return { error: BOARD_CHANGED };
-  }
+  const beforePosition = before?.position ?? null;
+  const afterPosition = after?.position ?? null;
 
-  // 6. One row changes, however big the column is
-  await prisma.task.update({ where: { id: task.id }, data: { status, position } });
+  if (hasRoomBetween(beforePosition, afterPosition)) {
+    // 5. The normal case: one new key between the neighbours, one row changes
+    const position =
+      before || after
+        ? positionBetween(beforePosition, afterPosition)
+        : await bottomOfColumn(projectId, status);
+    await prisma.task.update({ where: { id: task.id }, data: { status, position } });
+  } else {
+    // 5b. The neighbours share a position (two tasks were added to this
+    //     column at the same moment), so no key fits between them. Give the
+    //     whole column fresh, evenly spaced keys in one transaction, with the
+    //     moved task right after `before`. Rare, and it repairs the tie for good.
+    await rebalanceColumn(projectId, status, task.id, before?.id ?? null);
+  }
 
   revalidatePath(`/projects/${projectId}`);
   return {};

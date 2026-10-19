@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { positionAfter, positionBetween } from "./position";
+import {
+  freshPositions,
+  hasRoomBetween,
+  orderWithInsert,
+  positionAfter,
+  positionBetween,
+} from "./position";
 
 // JavaScript's default string comparison (and .sort()) compares character
 // codes, which for these ASCII keys is the same order as Postgres COLLATE "C".
@@ -73,5 +79,64 @@ describe("positionBetween", () => {
   it("rejects neighbours that are equal or out of order", () => {
     expect(() => positionBetween("a1", "a1")).toThrow(/must sort before/);
     expect(() => positionBetween("a1", "a0")).toThrow(/must sort before/);
+  });
+});
+
+describe("hasRoomBetween", () => {
+  it("has room between ordered neighbours and at either end", () => {
+    expect(hasRoomBetween("a0", "a1")).toBe(true);
+    expect(hasRoomBetween(null, "a0")).toBe(true);
+    expect(hasRoomBetween("a0", null)).toBe(true);
+    expect(hasRoomBetween(null, null)).toBe(true);
+  });
+
+  it("has no room between two cards that share a position", () => {
+    // Two people added a task to the same column at the same moment
+    expect(hasRoomBetween("a1", "a1")).toBe(false);
+  });
+
+  it("has no room when the neighbours are out of order", () => {
+    expect(hasRoomBetween("a2", "a1")).toBe(false);
+  });
+});
+
+describe("freshPositions", () => {
+  it("returns the requested number of ordered, unique keys", () => {
+    const keys = freshPositions(50);
+    expect(keys).toHaveLength(50);
+    expect(isStrictlySorted(keys)).toBe(true);
+    expect(new Set(keys).size).toBe(50);
+  });
+
+  it("returns nothing for an empty column", () => {
+    expect(freshPositions(0)).toEqual([]);
+  });
+});
+
+describe("orderWithInsert", () => {
+  const column = ["a", "b", "c"];
+
+  it("inserts right after the card above", () => {
+    expect(orderWithInsert(column, "x", "b")).toEqual(["a", "b", "x", "c"]);
+  });
+
+  it("inserts at the top when there is no card above", () => {
+    expect(orderWithInsert(column, "x", null)).toEqual(["x", "a", "b", "c"]);
+  });
+
+  it("moves a task that is already in the column instead of duplicating it", () => {
+    expect(orderWithInsert(column, "a", "c")).toEqual(["b", "c", "a"]);
+  });
+
+  it("puts the task at the bottom if the card above is unknown", () => {
+    expect(orderWithInsert(column, "x", "gone")).toEqual(["a", "b", "c", "x"]);
+  });
+
+  it("repairs a tie: the rebalanced keys put the moved card between the twins", () => {
+    // b and c share position "a1"; dropping x between them
+    const order = orderWithInsert(column, "x", "b");
+    const keys = freshPositions(order.length);
+    const byId = Object.fromEntries(order.map((id, i) => [id, keys[i]]));
+    expect(byId.b < byId.x && byId.x < byId.c).toBe(true);
   });
 });

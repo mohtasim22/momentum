@@ -57,7 +57,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[proj
       </div>
 
       {/* Four columns: side by side on large screens, swipe sideways on phones */}
-      <div className="-mx-4 overflow-x-auto px-4 pb-2">
+      <div className="-mx-4 min-w-0 overflow-x-auto px-4 pb-2">
         <Board projectId={project.id} columns={columns} members={members} />
       </div>
     </div>

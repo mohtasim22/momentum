@@ -130,6 +130,7 @@ export async function updateTask(
     status: formData.get("status"),
     priority: formData.get("priority"),
     dueDate: formData.get("dueDate"),
+    assigneeId: formData.get("assigneeId"),
   };
   const parsed = updateTaskSchema.safeParse(raw);
   if (!parsed.success) {
@@ -141,10 +142,24 @@ export async function updateTask(
         status: String(raw.status ?? ""),
         priority: String(raw.priority ?? ""),
         dueDate: String(raw.dueDate ?? ""),
+        assigneeId: String(raw.assigneeId ?? ""),
       },
     };
   }
-  const { title, description, status, priority, dueDate } = parsed.data;
+  const { title, description, status, priority, dueDate, assigneeId } = parsed.data;
+
+  // Only members of this project can be assigned. Checking the membership
+  // row (not just "is this a real user") stops tasks being handed to people
+  // who can't even see the board.
+  if (assigneeId) {
+    const assigneeIsMember = await prisma.membership.findUnique({
+      where: { userId_projectId: { userId: assigneeId, projectId } },
+      select: { id: true },
+    });
+    if (!assigneeIsMember) {
+      return { fieldErrors: { assigneeId: ["That person isn't in this project."] } };
+    }
+  }
 
   await prisma.task.update({
     where: { id: task.id },
@@ -154,6 +169,7 @@ export async function updateTask(
       priority,
       status,
       dueDate: dueDate ? dateOnlyToDate(dueDate) : null,
+      assigneeId,
       // Moved to another column from the form? Put it at the bottom there.
       ...(status !== task.status && { position: await bottomOfColumn(projectId, status) }),
     },

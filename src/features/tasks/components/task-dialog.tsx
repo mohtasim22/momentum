@@ -35,7 +35,12 @@ export function TaskDialog({ projectId, task }: Props) {
           />
         }
       >
-        <TaskCard title={task.title} priority={task.priority} dueDate={task.dueDate} />
+        <TaskCard
+          title={task.title}
+          priority={task.priority}
+          dueDate={task.dueDate}
+          assigneeName={task.assignee?.name}
+        />
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>

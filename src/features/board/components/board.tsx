@@ -21,16 +21,18 @@ import { toast } from "sonner";
 import { moveTask } from "@/features/tasks/actions";
 import { boardAnnouncements, screenReaderInstructions } from "../board-announcements";
 import { findColumn, moveToColumn, reorderWithinColumn, sameSpot, spotOf } from "../board-state";
-import type { BoardColumnData } from "../types";
+import { MembersProvider } from "../members-context";
+import type { BoardColumnData, BoardMember } from "../types";
 import { BoardColumn } from "./board-column";
 import { TaskCard } from "./task-card";
 
 type Props = {
   projectId: string;
   columns: BoardColumnData[];
+  members: BoardMember[];
 };
 
-export function Board({ projectId, columns: serverColumns }: Props) {
+export function Board({ projectId, columns: serverColumns, members }: Props) {
   const router = useRouter();
 
   // Local copy of the board, so a drop can reorder cards instantly.
@@ -163,11 +165,13 @@ export function Board({ projectId, columns: serverColumns }: Props) {
       >
         {isSaving ? "Saving…" : ""}
       </p>
-      <div className="flex gap-3 lg:grid lg:grid-cols-4">
-        {columns.map((column) => (
-          <BoardColumn key={column.status} projectId={projectId} {...column} />
-        ))}
-      </div>
+      <MembersProvider value={members}>
+        <div className="flex gap-3 lg:grid lg:grid-cols-4">
+          {columns.map((column) => (
+            <BoardColumn key={column.status} projectId={projectId} {...column} />
+          ))}
+        </div>
+      </MembersProvider>
       {/* A floating copy of the card follows the pointer; the original stays
           in the list, faded, to show where it will land */}
       <DragOverlay>
@@ -177,6 +181,7 @@ export function Board({ projectId, columns: serverColumns }: Props) {
               title={activeTask.title}
               priority={activeTask.priority}
               dueDate={activeTask.dueDate}
+              assigneeName={activeTask.assignee?.name}
             />
           </div>
         )}

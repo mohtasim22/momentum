@@ -32,6 +32,8 @@ export const updateTaskSchema = z.object({
   dueDate: z
     .union([z.literal(""), z.iso.date("Use a real date")])
     .transform((value) => (value === "" ? null : value)),
+  // A user id, or "" for unassigned. Membership is checked in the action.
+  assigneeId: z.string().transform((value) => (value === "" ? null : value)),
 });
 
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;

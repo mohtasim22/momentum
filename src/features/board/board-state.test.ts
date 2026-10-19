@@ -11,6 +11,7 @@ function task(id: string, status: BoardTask["status"]): BoardTask {
     priority: "MEDIUM",
     dueDate: null,
     canDelete: true,
+    assignee: null,
   };
 }
 

@@ -10,7 +10,11 @@ export type BoardTask = {
   priority: Priority;
   dueDate: string | null;
   canDelete: boolean;
+  assignee: { id: string; name: string } | null;
 };
+
+// Someone a task can be assigned to: a member of the project
+export type BoardMember = { id: string; name: string };
 
 // One column as the board component receives it
 export type BoardColumnData = {

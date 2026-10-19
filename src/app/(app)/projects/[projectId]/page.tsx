@@ -19,7 +19,7 @@ export async function generateMetadata({
 
 export default async function ProjectPage({ params }: PageProps<"/projects/[projectId]">) {
   const { projectId } = await params;
-  const { project, role, columns } = await getBoard(projectId);
+  const { project, role, columns, members } = await getBoard(projectId);
 
   return (
     <div className="grid gap-6">
@@ -58,7 +58,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[proj
 
       {/* Four columns: side by side on large screens, swipe sideways on phones */}
       <div className="-mx-4 overflow-x-auto px-4 pb-2">
-        <Board projectId={project.id} columns={columns} />
+        <Board projectId={project.id} columns={columns} members={members} />
       </div>
     </div>
   );

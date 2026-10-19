@@ -4,7 +4,7 @@ import { requireMembership } from "@/lib/authz";
 import { dateToDateOnly } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
 import { COLUMNS } from "./columns";
-import type { BoardTask } from "./types";
+import type { BoardMember, BoardTask } from "./types";
 import { canDeleteTask } from "@/lib/permissions";
 
 // Everything the board page needs, in one query. requireMembership runs
@@ -25,6 +25,7 @@ export async function getBoard(projectId: string) {
       priority: true,
       dueDate: true,
       createdById: true,
+      assignee: { select: { id: true, name: true } },
     },
   });
 
@@ -41,5 +42,13 @@ export async function getBoard(projectId: string) {
     tasks: tasks.filter((task) => task.status === column.status),
   }));
 
-  return { project, role, columns };
+  // Everyone a task can be assigned to
+  const memberships = await prisma.membership.findMany({
+    where: { projectId },
+    orderBy: { user: { name: "asc" } },
+    select: { user: { select: { id: true, name: true } } },
+  });
+  const members: BoardMember[] = memberships.map((m) => m.user);
+
+  return { project, role, columns, members };
 }

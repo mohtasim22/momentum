@@ -220,6 +220,12 @@ export async function removeMember(
     }
 
     await tx.membership.delete({ where: { id: target.id } });
+    // Their tasks here stay, but unassigned: nobody should be assigned work
+    // on a board they can no longer see
+    await tx.task.updateMany({
+      where: { projectId, assigneeId: target.userId },
+      data: { assigneeId: null },
+    });
     return { isSelf };
   });
   if ("error" in result) return { error: result.error };

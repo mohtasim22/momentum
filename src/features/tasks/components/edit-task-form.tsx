@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { COLUMNS } from "@/features/board/columns";
+import { useBoardMembers } from "@/features/board/members-context";
 import type { BoardTask } from "@/features/board/types";
 import { useSchemaValidation } from "@/hooks/use-schema-validation";
 import type { FormState } from "@/lib/form-state";
@@ -36,6 +37,7 @@ export function EditTaskForm({ projectId, task, onSaved }: Props) {
     {},
   );
   const { clientErrors, validate } = useSchemaValidation(updateTaskSchema);
+  const members = useBoardMembers();
 
   const errors = clientErrors ?? state.fieldErrors;
   // After a failed save, show what the user typed; otherwise the saved task
@@ -45,6 +47,7 @@ export function EditTaskForm({ projectId, task, onSaved }: Props) {
     status: task.status,
     priority: task.priority,
     dueDate: task.dueDate ?? "",
+    assigneeId: task.assignee?.id ?? "",
   };
 
   return (
@@ -72,6 +75,24 @@ export function EditTaskForm({ projectId, task, onSaved }: Props) {
             aria-invalid={!!errors?.description}
           />
           <FieldError>{errors?.description?.[0]}</FieldError>
+        </Field>
+
+        <Field data-invalid={!!errors?.assigneeId}>
+          <FieldLabel htmlFor="task-assignee">Assignee</FieldLabel>
+          <NativeSelect
+            id="task-assignee"
+            name="assigneeId"
+            defaultValue={values.assigneeId}
+            className="w-full"
+          >
+            <NativeSelectOption value="">Unassigned</NativeSelectOption>
+            {members.map((member) => (
+              <NativeSelectOption key={member.id} value={member.id}>
+                {member.name}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+          <FieldError>{errors?.assigneeId?.[0]}</FieldError>
         </Field>
 
         <div className="grid gap-4 sm:grid-cols-3">

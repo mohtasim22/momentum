@@ -19,6 +19,7 @@ model User {
   accounts      Account[]
   memberships   Membership[]
   tasksCreated  Task[]       @relation("TasksCreated")
+  invitesSent   Invitation[] @relation("InvitesSent")
 
   @@unique([email])
   @@map("user")
@@ -88,6 +89,7 @@ model Project {
 
   memberships Membership[]
   tasks       Task[]
+  invitations Invitation[]
 
   @@map("project")
 }
@@ -143,4 +145,24 @@ model Task {
 
   @@index([projectId, status, position])
   @@map("task")
+}
+
+// An invite by email. The email contains a random token; only its SHA-256
+// hash is stored, so a leaked database can't be used to accept invites.
+model Invitation {
+  id         String    @id @default(cuid(2))
+  email      String
+  role       Role      @default(MEMBER)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  projectId   String
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  invitedById String?
+  invitedBy   User?   @relation("InvitesSent", fields: [invitedById], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@map("invitation")
 }

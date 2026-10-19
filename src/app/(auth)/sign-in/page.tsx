@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { DemoSignInButton } from "@/features/auth/components/demo-sign-in-button";
 import { SignInForm } from "@/features/auth/components/sign-in-form";
 import { demoAvailable } from "@/features/auth/demo";
+import { GoogleSignInButton } from "@/features/auth/components/google-sign-in-button";
+import { googleEnabled } from "@/lib/auth";
 import { safeNextPath } from "@/lib/safe-redirect";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
@@ -27,6 +29,14 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
           Welcome back. Your boards are where you left them.
         </p>
       </div>
+      {googleEnabled && (
+        <>
+          <GoogleSignInButton next={next} />
+          <p className="text-center font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
+            or with email
+          </p>
+        </>
+      )}
       <SignInForm next={next} />
       {demoAvailable() && !next && (
         <div className="grid gap-3 border-t pt-6">

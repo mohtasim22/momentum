@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { SignUpForm } from "@/features/auth/components/sign-up-form";
+import { GoogleSignInButton } from "@/features/auth/components/google-sign-in-button";
+import { googleEnabled } from "@/lib/auth";
 import { safeNextPath } from "@/lib/safe-redirect";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
@@ -25,6 +27,14 @@ export default async function SignUpPage({ searchParams }: PageProps<"/sign-up">
           You&apos;ll start your first project right after.
         </p>
       </div>
+      {googleEnabled && (
+        <>
+          <GoogleSignInButton next={next} />
+          <p className="text-center font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
+            or with email
+          </p>
+        </>
+      )}
       <SignUpForm next={next} />
     </div>
   );

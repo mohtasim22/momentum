@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
 import { SignUpForm } from "@/features/auth/components/sign-up-form";
+import { safeNextPath } from "@/lib/safe-redirect";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = { title: "Sign up" };
 
-export default async function SignUpPage() {
+export default async function SignUpPage({ searchParams }: PageProps<"/sign-up">) {
+  const next = safeNextPath((await searchParams).next) ?? undefined;
+
   // Already signed in? Skip the form. This is a real session check, not just
   // "is there a cookie", so an expired cookie can't cause a redirect loop.
   if (await getSession()) {
-    redirect("/projects");
+    redirect(next ?? "/projects");
   }
   return (
     <div className="grid gap-6">
@@ -22,7 +25,7 @@ export default async function SignUpPage() {
           You&apos;ll start your first project right after.
         </p>
       </div>
-      <SignUpForm />
+      <SignUpForm next={next} />
     </div>
   );
 }

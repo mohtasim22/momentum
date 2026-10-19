@@ -9,7 +9,7 @@ import { signIn } from "../actions";
 import { signInSchema } from "../schemas";
 import { useSchemaValidation } from "@/hooks/use-schema-validation";
 
-export function SignInForm() {
+export function SignInForm({ next }: { next?: string }) {
   const [state, formAction, pending] = useActionState(signIn, {});
   const { clientErrors, validate } = useSchemaValidation(signInSchema);
 
@@ -17,6 +17,7 @@ export function SignInForm() {
 
   return (
     <form action={formAction} onSubmit={validate} noValidate className="grid gap-6">
+      {next && <input type="hidden" name="next" value={next} />}
       <FieldGroup>
         <Field data-invalid={!!errors?.email}>
           <FieldLabel htmlFor="email">Email</FieldLabel>
@@ -59,7 +60,10 @@ export function SignInForm() {
 
       <p className="text-center text-sm text-muted-foreground">
         New to Momentum?{" "}
-        <Link href="/sign-up" className="text-primary underline-offset-4 hover:underline">
+        <Link
+          href={next ? `/sign-up?next=${encodeURIComponent(next)}` : "/sign-up"}
+          className="text-primary underline-offset-4 hover:underline"
+        >
           Create an account
         </Link>
       </p>

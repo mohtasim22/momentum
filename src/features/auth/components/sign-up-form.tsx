@@ -9,7 +9,7 @@ import { signUp } from "../actions";
 import { signUpSchema } from "../schemas";
 import { useSchemaValidation } from "@/hooks/use-schema-validation";
 
-export function SignUpForm() {
+export function SignUpForm({ next }: { next?: string }) {
   const [state, formAction, pending] = useActionState(signUp, {});
   const { clientErrors, validate } = useSchemaValidation(signUpSchema);
 
@@ -17,6 +17,7 @@ export function SignUpForm() {
 
   return (
     <form action={formAction} onSubmit={validate} noValidate className="grid gap-6">
+      {next && <input type="hidden" name="next" value={next} />}
       <FieldGroup>
         <Field data-invalid={!!errors?.name}>
           <FieldLabel htmlFor="name">Name</FieldLabel>
@@ -71,7 +72,10 @@ export function SignUpForm() {
 
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link href="/sign-in" className="text-primary underline-offset-4 hover:underline">
+        <Link
+          href={next ? `/sign-in?next=${encodeURIComponent(next)}` : "/sign-in"}
+          className="text-primary underline-offset-4 hover:underline"
+        >
           Sign in
         </Link>
       </p>

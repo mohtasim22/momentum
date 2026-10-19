@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { safeNextPath } from "@/lib/safe-redirect";
 import { signInSchema, signUpSchema, type SignInState, type SignUpState } from "./schemas";
 
 export async function signUp(_prevState: SignUpState, formData: FormData): Promise<SignUpState> {
@@ -38,8 +39,9 @@ export async function signUp(_prevState: SignUpState, formData: FormData): Promi
   }
 
   // Outside the try: redirect() works by throwing, and the catch above
-  // must not swallow it. Changes to /projects in step 1.8.
-  redirect("/projects");
+  // must not swallow it. `next` comes from links like an invite's
+  // "Create account", and is only followed if it's a path on this site.
+  redirect(safeNextPath(formData.get("next")) ?? "/projects");
 }
 
 export async function signIn(_prevState: SignInState, formData: FormData): Promise<SignInState> {
@@ -68,11 +70,14 @@ export async function signIn(_prevState: SignInState, formData: FormData): Promi
     throw error;
   }
 
-  redirect("/projects");
+  redirect(safeNextPath(formData.get("next")) ?? "/projects");
 }
 
-export async function signOut() {
+export async function signOut(formData: FormData) {
   // Deletes the session row and clears the cookie (via nextCookies()).
   await auth.api.signOut({ headers: await headers() });
-  redirect("/sign-in");
+  // e.g. signing out of the wrong account on an invite page brings you
+  // back to it after signing in again
+  const next = safeNextPath(formData.get("next"));
+  redirect(next ? `/sign-in?next=${encodeURIComponent(next)}` : "/sign-in");
 }

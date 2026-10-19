@@ -53,3 +53,28 @@ export function reorderWithinColumn(
     return { ...column, tasks: arrayMove(column.tasks, from, to) };
   });
 }
+
+/** Where a task sits: its column, and the ids of the cards just above and below it. */
+export type TaskSpot = {
+  status: TaskStatus;
+  beforeId: string | null;
+  afterId: string | null;
+};
+
+export function spotOf(columns: BoardColumnData[], taskId: UniqueIdentifier): TaskSpot | undefined {
+  for (const column of columns) {
+    const index = column.tasks.findIndex((task) => task.id === taskId);
+    if (index !== -1) {
+      return {
+        status: column.status,
+        beforeId: column.tasks[index - 1]?.id ?? null,
+        afterId: column.tasks[index + 1]?.id ?? null,
+      };
+    }
+  }
+  return undefined;
+}
+
+export function sameSpot(a: TaskSpot | undefined, b: TaskSpot | undefined): boolean {
+  return a?.status === b?.status && a?.beforeId === b?.beforeId && a?.afterId === b?.afterId;
+}

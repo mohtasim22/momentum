@@ -35,3 +35,15 @@ export const updateTaskSchema = z.object({
 });
 
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
+
+// Sent by the board after a drop: which task, which column, and the cards
+// now directly above and below it (null at the top or bottom).
+// Never a position: the server works that out from the neighbours.
+export const moveTaskSchema = z.object({
+  taskId: z.string().min(1),
+  status: taskStatusSchema,
+  beforeId: z.string().min(1).nullable(),
+  afterId: z.string().min(1).nullable(),
+});
+
+export type MoveTaskInput = z.infer<typeof moveTaskSchema>;

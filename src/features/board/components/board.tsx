@@ -10,8 +10,9 @@ import {
   type DragEndEvent,
   type DragOverEvent,
 } from "@dnd-kit/core";
-import { useId, useState } from "react";
-import { findColumn, moveToColumn, reorderWithinColumn } from "../board-state";
+import { useId, useState, useTransition } from "react";
+import { moveTask } from "@/features/tasks/actions";
+import { findColumn, moveToColumn, reorderWithinColumn, sameSpot, spotOf } from "../board-state";
 import type { BoardColumnData } from "../types";
 import { BoardColumn } from "./board-column";
 
@@ -42,6 +43,8 @@ export function Board({ projectId, columns: serverColumns }: Props) {
     // Touch: press and hold briefly, so a swipe still scrolls the board
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
   );
+
+  const [, startTransition] = useTransition();
 
   // A stable id stops server and browser from generating different
   // accessibility ids (a hydration mismatch)
@@ -76,12 +79,25 @@ export function Board({ projectId, columns: serverColumns }: Props) {
     });
   }
 
-  // The card is already in the right column (handleDragOver); now settle its
-  // position inside that column.
+  // The card is already in the right column (handleDragOver); settle its
+  // position inside that column, then tell the server where it landed.
   function handleDragEnd({ active, over }: DragEndEvent) {
+    const snapshot = beforeDrag;
     setBeforeDrag(null);
-    if (!over) return;
-    setColumns((current) => reorderWithinColumn(current, active.id, over.id));
+    if (!over || !snapshot) return;
+
+    const next = reorderWithinColumn(columns, active.id, over.id);
+    setColumns(next);
+
+    const spot = spotOf(next, active.id);
+    // Dropped exactly where it started: nothing to save
+    if (!spot || sameSpot(spotOf(snapshot, active.id), spot)) return;
+
+    startTransition(async () => {
+      const result = await moveTask(projectId, { taskId: String(active.id), ...spot });
+      // The server said no: put the board back as it was (a toast comes in 4.4)
+      if (result.error) setColumns(snapshot);
+    });
   }
 
   // Escape pressed, or dropped somewhere invalid: put everything back

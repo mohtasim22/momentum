@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findColumn, moveToColumn, reorderWithinColumn } from "./board-state";
+import { findColumn, moveToColumn, reorderWithinColumn, sameSpot, spotOf } from "./board-state";
 import type { BoardColumnData, BoardTask } from "./types";
 
 function task(id: string, status: BoardTask["status"]): BoardTask {
@@ -86,5 +86,26 @@ describe("reorderWithinColumn", () => {
   it("ignores ids from different columns", () => {
     const before = board();
     expect(reorderWithinColumn(before, "a", "d")).toEqual(before);
+  });
+});
+
+describe("spotOf / sameSpot", () => {
+  it("names the neighbours above and below", () => {
+    expect(spotOf(board(), "b")).toEqual({ status: "TODO", beforeId: "a", afterId: "c" });
+  });
+
+  it("uses null at the top and bottom of a column", () => {
+    expect(spotOf(board(), "a")).toEqual({ status: "TODO", beforeId: null, afterId: "b" });
+    expect(spotOf(board(), "d")).toEqual({ status: "IN_PROGRESS", beforeId: null, afterId: null });
+  });
+
+  it("detects a drop back where the card started", () => {
+    const before = board();
+    const after = reorderWithinColumn(reorderWithinColumn(before, "a", "c"), "a", "b");
+    expect(ids(after, "TODO")).toEqual(["a", "b", "c"]);
+    expect(sameSpot(spotOf(before, "a"), spotOf(after, "a"))).toBe(true);
+    expect(sameSpot(spotOf(before, "a"), spotOf(reorderWithinColumn(before, "a", "c"), "a"))).toBe(
+      false,
+    );
   });
 });

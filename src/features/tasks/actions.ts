@@ -7,15 +7,17 @@ import type { TaskStatus } from "@/generated/prisma/enums";
 import { requireMembership } from "@/lib/authz";
 import { dateOnlyToDate } from "@/lib/dates";
 import type { FormState } from "@/lib/form-state";
-import { positionAfter } from "@/lib/position";
+import { canDeleteTask } from "@/lib/permissions";
+import { positionAfter, positionBetween } from "@/lib/position";
 import { prisma } from "@/lib/prisma";
 import {
   createTaskSchema,
+  moveTaskSchema,
   updateTaskSchema,
   type CreateTaskInput,
+  type MoveTaskInput,
   type UpdateTaskInput,
 } from "./schemas";
-import { canDeleteTask } from "@/lib/permissions";
 
 // Not exported, so not callable from the browser: just shared helpers.
 
@@ -138,6 +140,61 @@ export async function deleteTask(projectId: string, taskId: string): Promise<{ e
   }
 
   await prisma.task.delete({ where: { id: task.id } });
+
+  revalidatePath(`/projects/${projectId}`);
+  return {};
+}
+
+const BOARD_CHANGED = "The board changed while you were dragging. Refresh and try again.";
+
+// Called by the board after a drop. The client says where the card landed
+// (column + neighbour ids); the server checks that picture against the
+// database and computes the position itself.
+export async function moveTask(
+  projectId: string,
+  input: MoveTaskInput,
+): Promise<{ error?: string }> {
+  // 1. Member of this project?
+  await requireMembership(projectId);
+
+  // 2. Is the input the right shape?
+  const parsed = moveTaskSchema.safeParse(input);
+  if (!parsed.success) return { error: BOARD_CHANGED };
+  const { taskId, status, beforeId, afterId } = parsed.data;
+
+  // 3. The task must belong to this project (IDOR)
+  const task = await findTaskInProject(projectId, taskId);
+
+  // 4. The neighbours must exist, belong to this project, and be in the
+  //    target column. The projectId filter means another team's task ids
+  //    simply aren't found.
+  const neighbourIds = [beforeId, afterId].filter((id): id is string => id !== null);
+  if (neighbourIds.includes(task.id)) return { error: BOARD_CHANGED };
+
+  const neighbours = await prisma.task.findMany({
+    where: { projectId, id: { in: neighbourIds } },
+    select: { id: true, status: true, position: true },
+  });
+  const before = neighbours.find((n) => n.id === beforeId);
+  const after = neighbours.find((n) => n.id === afterId);
+  if ((beforeId && before?.status !== status) || (afterId && after?.status !== status)) {
+    return { error: BOARD_CHANGED };
+  }
+
+  // 5. Compute the new position from the neighbours' real positions
+  let position: string;
+  try {
+    position =
+      before || after
+        ? positionBetween(before?.position ?? null, after?.position ?? null)
+        : await bottomOfColumn(projectId, status);
+  } catch {
+    // Neighbours out of order, or sharing a position (step 4.6)
+    return { error: BOARD_CHANGED };
+  }
+
+  // 6. One row changes, however big the column is
+  await prisma.task.update({ where: { id: task.id }, data: { status, position } });
 
   revalidatePath(`/projects/${projectId}`);
   return {};

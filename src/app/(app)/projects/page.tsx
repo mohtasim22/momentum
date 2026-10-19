@@ -2,10 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CreateProjectDialog } from "@/features/projects/components/create-project-dialog";
 import { getMyProjects } from "@/features/projects/queries";
+import { ROLE_LABEL } from "@/features/team/roles";
 
 export const metadata: Metadata = { title: "Projects" };
-
-const roleLabel = { OWNER: "Owner", ADMIN: "Admin", MEMBER: "Member" } as const;
 
 export default async function ProjectsPage() {
   // Authorizes itself (requireUser inside), so this page stays thin
@@ -42,7 +41,7 @@ export default async function ProjectsPage() {
                 <span className="truncate font-medium">{project.name}</span>
                 <span className="flex items-center gap-2 font-mono text-xs text-muted-foreground">
                   <span className="rounded-sm bg-secondary px-1.5 py-0.5 text-ink-2">
-                    {roleLabel[project.myRole]}
+                    {ROLE_LABEL[project.myRole]}
                   </span>
                   {project.memberCount} {project.memberCount === 1 ? "member" : "members"}
                 </span>

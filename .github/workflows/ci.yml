@@ -13,7 +13,8 @@ concurrency:
 jobs:
   check:
     name: Format, lint, types, tests, build
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest moves to a brand-new image in October 2026
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     # A real Postgres for the integration tests. The official image defaults

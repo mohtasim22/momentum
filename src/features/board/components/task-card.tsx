@@ -19,7 +19,8 @@ export function TaskCard({ title, priority, dueDate }: Props) {
   const marker = priorityMarker[priority];
 
   return (
-    <span className="grid gap-2 rounded-md border bg-card p-3 text-sm">
+    // pr-9 leaves room for the drag handle in the top-right corner
+    <span className="grid gap-2 rounded-md border bg-card p-3 pr-9 text-sm">
       <span className="leading-snug wrap-break-word">{title}</span>
       {(marker || dueDate) && (
         <span className="flex flex-wrap items-center gap-3 font-mono text-[11px]">

@@ -3,20 +3,27 @@
 import {
   closestCorners,
   DndContext,
+  DragOverlay,
+  KeyboardSensor,
   MouseSensor,
   TouchSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
   type DragOverEvent,
+  type DragStartEvent,
+  type UniqueIdentifier,
 } from "@dnd-kit/core";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useRouter } from "next/navigation";
 import { useId, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { moveTask } from "@/features/tasks/actions";
+import { boardAnnouncements, screenReaderInstructions } from "../board-announcements";
 import { findColumn, moveToColumn, reorderWithinColumn, sameSpot, spotOf } from "../board-state";
 import type { BoardColumnData } from "../types";
 import { BoardColumn } from "./board-column";
+import { TaskCard } from "./task-card";
 
 type Props = {
   projectId: string;
@@ -30,6 +37,11 @@ export function Board({ projectId, columns: serverColumns }: Props) {
   const [columns, setColumns] = useState(serverColumns);
   // The board as it was when the drag began, to restore if it's cancelled
   const [beforeDrag, setBeforeDrag] = useState<BoardColumnData[] | null>(null);
+  // The card being dragged, shown floating under the pointer (DragOverlay)
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+
+  // Screen reader messages for the drag, built from the current board
+  const announcements = boardAnnouncements(columns);
 
   // When the server sends a fresh board (after adding or editing a task),
   // start again from it. This is React's "adjust state when a prop changes"
@@ -46,6 +58,8 @@ export function Board({ projectId, columns: serverColumns }: Props) {
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
     // Touch: press and hold briefly, so a swipe still scrolls the board
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
+    // Keyboard: Space on a card's grip handle, then arrow keys
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
   const [isSaving, startTransition] = useTransition();
@@ -54,8 +68,9 @@ export function Board({ projectId, columns: serverColumns }: Props) {
   // accessibility ids (a hydration mismatch)
   const dndId = useId();
 
-  function handleDragStart() {
+  function handleDragStart({ active }: DragStartEvent) {
     setBeforeDrag(columns);
+    setActiveId(active.id);
   }
 
   // Fires continuously while dragging. As soon as the card is over another
@@ -88,6 +103,7 @@ export function Board({ projectId, columns: serverColumns }: Props) {
   function handleDragEnd({ active, over }: DragEndEvent) {
     const snapshot = beforeDrag;
     setBeforeDrag(null);
+    setActiveId(null);
     if (!over || !snapshot) return;
 
     // 1. Optimistic: show the move straight away
@@ -122,7 +138,13 @@ export function Board({ projectId, columns: serverColumns }: Props) {
   function handleDragCancel() {
     if (beforeDrag) setColumns(beforeDrag);
     setBeforeDrag(null);
+    setActiveId(null);
   }
+
+  const activeTask =
+    activeId === null
+      ? null
+      : columns.flatMap((column) => column.tasks).find((task) => task.id === activeId);
 
   return (
     <DndContext
@@ -133,6 +155,7 @@ export function Board({ projectId, columns: serverColumns }: Props) {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
+      accessibility={{ announcements, screenReaderInstructions }}
     >
       <p
         aria-live="polite"
@@ -145,6 +168,19 @@ export function Board({ projectId, columns: serverColumns }: Props) {
           <BoardColumn key={column.status} projectId={projectId} {...column} />
         ))}
       </div>
+      {/* A floating copy of the card follows the pointer; the original stays
+          in the list, faded, to show where it will land */}
+      <DragOverlay>
+        {activeTask && (
+          <div className="shadow-xl shadow-black/40">
+            <TaskCard
+              title={activeTask.title}
+              priority={activeTask.priority}
+              dueDate={activeTask.dueDate}
+            />
+          </div>
+        )}
+      </DragOverlay>
     </DndContext>
   );
 }

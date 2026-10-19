@@ -1,5 +1,9 @@
+"use client";
+
 import type { Priority } from "@/generated/prisma/enums";
+import { useToday } from "@/hooks/use-today";
 import { formatDateOnly } from "@/lib/dates";
+import { isOverdue } from "@/lib/urgency";
 
 type Props = {
   title: string;
@@ -18,6 +22,8 @@ const priorityMarker: Partial<Record<Priority, { label: string; className: strin
 // and a button may only contain inline ("phrasing") content.
 export function TaskCard({ title, priority, dueDate, assigneeName }: Props) {
   const marker = priorityMarker[priority];
+  const today = useToday();
+  const overdue = today !== null && isOverdue(dueDate, today);
 
   return (
     // pr-9 leaves room for the drag handle in the top-right corner
@@ -28,7 +34,13 @@ export function TaskCard({ title, priority, dueDate, assigneeName }: Props) {
           {marker && (
             <span className={`font-semibold uppercase ${marker.className}`}>{marker.label}</span>
           )}
-          {dueDate && <span className="text-muted-foreground">Due {formatDateOnly(dueDate)}</span>}
+          {dueDate && (
+            <span
+              className={overdue ? "font-semibold text-status-overdue" : "text-muted-foreground"}
+            >
+              {overdue ? "Overdue" : "Due"} {formatDateOnly(dueDate)}
+            </span>
+          )}
           {assigneeName && (
             <span className="ml-auto flex items-center gap-1.5 text-ink-2">
               <span

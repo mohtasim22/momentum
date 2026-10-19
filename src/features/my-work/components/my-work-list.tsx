@@ -1,21 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
 import { COLUMNS } from "@/features/board/columns";
+import { useToday } from "@/hooks/use-today";
 import { cn } from "@/lib/utils";
 import { formatDateOnly } from "@/lib/dates";
 import { compareUrgency, isOverdue } from "@/lib/urgency";
 import type { MyWorkTask } from "../queries";
-
-// "Today" must be the viewer's date, which only the browser knows. On the
-// server (and during hydration) this is null, so both render the same list;
-// right after hydration React re-renders with the real date.
-const noop = () => () => {};
-const localToday = () => new Date().toLocaleDateString("en-CA"); // "YYYY-MM-DD", local time
-function useToday() {
-  return useSyncExternalStore(noop, localToday, () => null);
-}
 
 const STATUS = Object.fromEntries(COLUMNS.map((column) => [column.status, column]));
 

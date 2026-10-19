@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { clientIp, consumeRateLimit, LIMITS, tooManyAttempts } from "@/lib/rate-limit";
 import { safeNextPath } from "@/lib/safe-redirect";
 import { signInSchema, signUpSchema, type SignInState, type SignUpState } from "./schemas";
 
@@ -24,12 +25,19 @@ export async function signUp(_prevState: SignUpState, formData: FormData): Promi
     return { fieldErrors: z.flattenError(parsed.error).fieldErrors, values };
   }
 
+  const requestHeaders = await headers();
+  const limit = await consumeRateLimit(
+    `sign-up:ip:${clientIp(requestHeaders)}`,
+    LIMITS.signUpPerIp,
+  );
+  if (!limit.allowed) return { formError: tooManyAttempts(limit.retryAfterSeconds), values };
+
   try {
     // Creates the user + account (hashed password) + session.
     // nextCookies() in lib/auth.ts puts the session cookie on the response.
     await auth.api.signUpEmail({
       body: parsed.data,
-      headers: await headers(),
+      headers: requestHeaders,
     });
   } catch (error) {
     if (error instanceof APIError) {
@@ -56,10 +64,21 @@ export async function signIn(_prevState: SignInState, formData: FormData): Promi
     return { fieldErrors: z.flattenError(parsed.error).fieldErrors, values };
   }
 
+  // Two limits: per email (guessing one person's password) and per IP
+  // (trying many accounts from one machine)
+  const requestHeaders = await headers();
+  for (const [key, rule] of [
+    [`sign-in:email:${parsed.data.email}`, LIMITS.signInPerEmail],
+    [`sign-in:ip:${clientIp(requestHeaders)}`, LIMITS.signInPerIp],
+  ] as const) {
+    const limit = await consumeRateLimit(key, rule);
+    if (!limit.allowed) return { formError: tooManyAttempts(limit.retryAfterSeconds), values };
+  }
+
   try {
     await auth.api.signInEmail({
       body: parsed.data,
-      headers: await headers(),
+      headers: requestHeaders,
     });
   } catch (error) {
     if (error instanceof APIError) {

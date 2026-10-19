@@ -172,3 +172,14 @@ model Invitation {
   @@index([projectId])
   @@map("invitation")
 }
+
+// Fixed-window rate limits ("sign-in:email:a@b.com" → 3 attempts since
+// 10:42). In the database, not in memory, so every serverless instance
+// shares the same counts.
+model RateLimit {
+  key         String   @id
+  count       Int
+  windowStart DateTime
+
+  @@map("rate_limit")
+}

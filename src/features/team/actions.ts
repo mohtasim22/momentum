@@ -15,6 +15,7 @@ import {
   wouldRemoveLastOwner,
 } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { consumeRateLimit, LIMITS, tooManyAttempts } from "@/lib/rate-limit";
 import { requireUser } from "@/lib/session";
 import { createInviteToken, hashToken } from "@/lib/tokens";
 import { inviteSchema, roleSchema, type InviteInput } from "./schemas";
@@ -52,6 +53,10 @@ export async function inviteMember(
   if (!invitableRoles(role).includes(inviteRole)) {
     return { fieldErrors: { role: ["You can't invite people with that role."] } };
   }
+
+  // Each invite sends an email: cap them so the app can't be used for spam
+  const limit = await consumeRateLimit(`invite:user:${user.id}`, LIMITS.invitesPerUser);
+  if (!limit.allowed) return { formError: tooManyAttempts(limit.retryAfterSeconds) };
 
   const alreadyMember = await prisma.membership.findFirst({
     where: { projectId, user: { email } },
